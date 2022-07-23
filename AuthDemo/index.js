@@ -20,6 +20,21 @@ app.get("/register", (req, res) => {
 app.get("/", (req, res) => {
     res.send("Home Page");
 })
+app.get("/login", (req, res) => {
+    res.render("login");
+})
+app.post("/login", async (req, res) => {
+    const { username, password } = req.body;
+    const user = await User.findOne({ username });
+    const validPass = await bcrypt.compare(password, user.password);
+    if (validPass) {
+        res.send("Welcome!");
+    }
+    else {
+        res.send("Incorrect Username or Password");
+    }
+
+})
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
     //Here 12 is number of salt rounds
