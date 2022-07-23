@@ -3,6 +3,7 @@ const { default: mongoose } = require('mongoose');
 const app = express();
 const User = require("./models/user");
 const bcrypt = require("bcrypt");
+const session = require("express-session");
 mongoose.connect('mongodb://localhost:27017/authD')
     .then(() => {
         console.log("Mongo connection created");
@@ -14,6 +15,7 @@ mongoose.connect('mongodb://localhost:27017/authD')
 
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
+app.use(session({ secret: "A good Secret" }));
 app.get("/register", (req, res) => {
     res.render('register');
 })
@@ -28,10 +30,11 @@ app.post("/login", async (req, res) => {
     const user = await User.findOne({ username });
     const validPass = await bcrypt.compare(password, user.password);
     if (validPass) {
-        res.send("Welcome!");
+        req.session.user_id = user._id;
+        res.send('/secret');
     }
     else {
-        res.send("Incorrect Username or Password");
+        res.send('/login');
     }
 
 })
@@ -44,10 +47,14 @@ app.post('/register', async (req, res) => {
         password: hash
     })
     await user.save();
+    req.session.user_id = user._id;
     res.redirect("/");
 })
 app.get('/secret', (req, res) => {
-    res.send("Secret revealed");
+    if (!req.session.user_id)
+        res.redirect("/login");
+    else
+        res.send("Secret revealed");
 })
 app.listen(3000, () => {
     console.log("server started");
