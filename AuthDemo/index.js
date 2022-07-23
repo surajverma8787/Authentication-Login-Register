@@ -16,6 +16,7 @@ mongoose.connect('mongodb://localhost:27017/authD')
 
 const requireLogin = (req, res, next) => {
     if (!req.session.user_id) {
+        // console.log("Secret");
         res.redirect("/login");
     }
     else
@@ -42,10 +43,10 @@ app.get("/login", (req, res) => {
 
 app.post("/login", async (req, res) => {
     const { username, password } = req.body;
-    const user = await User.findOne({ username });
-    const validPass = await bcrypt.compare(password, user.password);
-    if (validPass) {
-        req.session.user_id = user._id;
+    const foundUser = await User.findAndValidate(username, password);
+    if (foundUser) {
+        console.log(foundUser);
+        req.session.user_id = foundUser._id;
         res.redirect("/secret");
     }
     else {
@@ -56,12 +57,7 @@ app.post("/login", async (req, res) => {
 
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
-    //Here 12 is number of salt rounds
-    const hash = await bcrypt.hash(password, 12);
-    const user = new User({
-        username,
-        password: hash
-    })
+    const user = new User({ username, password });
     await user.save();
     req.session.user_id = user._id;
     res.redirect("/");
