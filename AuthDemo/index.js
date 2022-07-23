@@ -14,6 +14,14 @@ mongoose.connect('mongodb://localhost:27017/authD')
         console.log(err);
     })
 
+const requireLogin = (req, res, next) => {
+    if (!req.session.user_id) {
+        res.redirect("/login");
+    }
+    else
+        next();
+}
+
 app.set('view engine', 'ejs');
 
 app.use(express.urlencoded({ extended: true }));
@@ -64,11 +72,8 @@ app.post('/logout', (req, res) => {
     res.redirect('/login');
 })
 
-app.get('/secret', (req, res) => {
-    if (!req.session.user_id)
-        res.redirect("/login");
-    else
-        res.render('secret');
+app.get('/secret', requireLogin, (req, res) => {
+    res.render('secret');
 })
 
 app.listen(3000, () => {
